@@ -7,6 +7,26 @@ import time
 import Queue
 import imutils
 import serial,time 
+
+#table: 
+ser = serial.Serial(
+            port='/dev/ttyUSB0',\
+            baudrate=9600,\
+            parity=serial.PARITY_NONE,\
+            stopbits=serial.STOPBITS_ONE,\
+            bytesize=serial.EIGHTBITS,\
+                timeout=0)
+
+print"connected to: " + ser.portstr
+wt1 = 0.0
+
+def isfloat(value):
+        try:
+    		float(value)
+    		return True
+  	except:
+    		return False
+
  
 running = False
 capture_thread = None
@@ -14,10 +34,16 @@ form_class = uic.loadUiType("gui.ui")[0]
 q = Queue.Queue()
   
 msgstat = ""
- 
+step1status = 0
+step2status = 0
+wt1 = 0.0
+wt2 = 0.0
+lsl = 0.00
+usl = 0.00
+
 def grab(cam, queue, width, height, fps):
     global running
-    capture = cv2.VideoCapture(1)
+    capture = cv2.VideoCapture(0)
     capture.set(cv2.CAP_PROP_FRAME_WIDTH, width)
     capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
     capture.set(cv2.CAP_PROP_FPS, fps)
@@ -76,12 +102,41 @@ class MyWindowClass(QtGui.QMainWindow, form_class):
         capture_thread.start()
         self.pushButton.setEnabled(False)
         #self.pushButton.setText('Initializing...')
+	self.widget_16.setStyleSheet("border-image: url(img/b0G.png);")
  
     def stop_clicked(self):
 	global running
         running = False
         sys.exit()
- 
+	
+    def weight1(self):
+	global wt1
+	wt=ser.readline()
+	#wt=wt.strip('\n')
+	if(isfloat(wt)):
+		wt1=float(wt)
+		print wt1
+	#time.sleep(0.2)
+	self.widget_11.setStyleSheet("border-image: url(img/b2G.png);")
+	self.widget_8.setStyleSheet("border-image: url(img/nextG.png);")
+	self.widget_12.setStyleSheet("border-image: url(img/nextG.png);")
+	self.textBrowser.setText("Connected to Servers...\n\nAir Weight Measured: "+str(wt1)+"g")
+	self.label_15.setText(str(wt1)+"g")
+
+    def weight2(self):
+	global wt2
+	wt=ser.readline()
+	#wt=wt.strip('\n')
+	if(isfloat(wt)):
+		wt2=float(wt)
+		print wt2
+	
+		self.widget_7.setStyleSheet("border-image: url(img/b4G.png);")
+		self.widget_6.setStyleSheet("border-image: url(img/nextG.png);")
+		self.textBrowser.setText("Connected to Servers...\n\nInside Weight Measured: "+str(wt2)+"g")
+		self.label_17.setText(str(wt2)+"g")
+		step1status = 1
+
     def step1(self):
 	    global img
 	    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -102,7 +157,10 @@ class MyWindowClass(QtGui.QMainWindow, form_class):
 		    #wt=ser.readline()
 		    #wt=wt.strip('\n')
 		    msg = "Detected"
-		    self.widget_18.setStyleSheet("border-image: url(img/icon7G.png);")
+		    #self.widget_18.setStyleSheet("border-image: url(img/icon7G.png);")
+		    self.widget_3.setStyleSheet("border-image: url(img/b1G.png);")
+	            self.widget_15.setStyleSheet("border-image: url(img/nextG.png);")
+		    self.weight1()
 		    self.textBrowser.setText("Connected to Servers...\n\nOutside Foam detected")
 		    cv2.putText(img, msg, (170-50, 150), cv2.FONT_HERSHEY_SIMPLEX,0.5, (0, 255, 0), 2)
 	
@@ -119,7 +177,7 @@ class MyWindowClass(QtGui.QMainWindow, form_class):
 	    global img
 	    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-	    template = cv2.imread('box.png',0)
+	    template = cv2.imread('box5.png',0)
             w, h = template.shape[::-1]
 	    res = cv2.matchTemplate(img_gray,template,cv2.TM_CCOEFF_NORMED)
             threshold = 0.8
@@ -135,9 +193,11 @@ class MyWindowClass(QtGui.QMainWindow, form_class):
 		    #wt=ser.readline()
 		    #wt=wt.strip('\n')
 		    msg = "Detected"
-		    self.widget_18.setStyleSheet("border-image: url(img/icon7G.png);")
-		    self.textBrowser.setText("Connected to Servers...\n\nOutside Foam detected")
-		    cv2.putText(img, msg, (300-50, 180), cv2.FONT_HERSHEY_SIMPLEX,0.5, (0, 255, 0), 2)   
+		    self.widget_13.setStyleSheet("border-image: url(img/b3G.png);")
+	            self.widget_14.setStyleSheet("border-image: url(img/nextG.png);")
+		    self.weight2()
+		    self.textBrowser.setText("Connected to Servers...\n\nInside Foam detected")
+		    cv2.putText(img, msg, (300-50, 150), cv2.FONT_HERSHEY_SIMPLEX,0.5, (0, 255, 0), 2)   
 	   
 	#end for
 	    
@@ -145,7 +205,33 @@ class MyWindowClass(QtGui.QMainWindow, form_class):
             bpl = bpc * width
             image = QtGui.QImage(img.data, width, height, bpl, QtGui.QImage.Format_RGB888)
             self.widget.setImage(image)
- 
+
+    def calculate(self):
+	global wt1
+	global wt2
+	global lsl
+	global usl
+	if(wt1!=0.00 and wt2!=0.00):
+		val = (wt1/wt2)*1000
+		self.textBrowser.setText("Connected to Servers...\n\nCheck-point Value: "+str(val))
+		self.widget_4.setStyleSheet("border-image: url(img/b5G.png);")
+		self.widget_5.setStyleSheet("border-image: url(img/nextG.png);")
+
+		self.label_19.setText(str(val))
+		if(val>=lsl and val<=usl):
+			self.textBrowser.setText("Data Sent to Servers...\n\nTest Status: Pass")
+			self.label_19.setText(str(val))
+			self.widget_18.setStyleSheet("border-image: url(img/icon7G.png);")
+			self.widget_9.setStyleSheet("border-image: url(img/b6G.png);")
+			self.widget_10.setStyleSheet("border-image: url(img/nextG.png);")
+			self.widget_17.setStyleSheet("border-image: url(img/b7G.png);")
+		else:
+			self.textBrowser.setText("Connected to Server...\n\nTest Status: Fail")
+			self.label_19.setText(str(val))
+	 		self.widget_18.setStyleSheet("border-image: url(img/icon7R.png);")
+			self.widget_9.setStyleSheet("border-image: url(img/b6G.png);")
+			self.widget_10.setStyleSheet("border-image: url(img/nextG.png);")
+			self.widget_17.setStyleSheet("border-image: url(img/b7G.png);")
 
     def update_frame(self):
         if not q.empty():
@@ -167,6 +253,7 @@ class MyWindowClass(QtGui.QMainWindow, form_class):
 	    #call step1             
             self.step1()
 	    self.step2()
+	    self.calculate()
 
     def closeEvent(self, event):
         global running
