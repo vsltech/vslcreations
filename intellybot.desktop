@@ -1,9 +1,0 @@
-[Desktop Entry]
-Name=IntellyBot
-Comment=IntellyBot Controller (v10.2017)
-Exec=/usr/bin/python /home/pi/intellybot/intellybot.py
-Icon=/home/pi/intellybot/img/icon.xpm
-Terminal=false
-Type=Application
-Categories=Development;
-
