@@ -1,0 +1,97 @@
+# Replace <Subscription Key> with your valid subscription key.
+subscription_key = "66e07c4aa50f4ce49add952577444c75"
+assert subscription_key
+
+# You must use the same region in your REST call as you used to get your
+# subscription keys. For example, if you got your subscription keys from
+# westus, replace "westcentralus" in the URI below with "westus".
+#
+# Free trial subscription keys are generated in the westcentralus region.
+# If you use a free trial subscription key, you shouldn't need to change
+# this region.
+face_api_url = 'https://southeastasia.api.cognitive.microsoft.com/face/v1.0/detect'
+
+# Set image_url to the URL of an image that you want to analyze.
+image_url = 'http://www.uni-regensburg.de/Fakultaeten/phil_Fak_II/Psychologie/Psy_II/beautycheck/english/durchschnittsgesichter/w(01-64)_gr.jpg'
+
+import requests
+#from IPython.display import HTML
+
+headers = {'Ocp-Apim-Subscription-Key': subscription_key}
+
+params = {
+    'returnFaceId': 'true',
+    'returnFaceLandmarks': 'false',
+    'returnFaceAttributes': 'age,gender,headPose,smile,facialHair,glasses,' +
+    'emotion,hair,makeup,occlusion,accessories,blur,exposure,noise'
+}
+
+response = requests.post(
+    face_api_url, params=params, headers=headers, json={"url": image_url})
+faces = response.json()
+
+emotion='none'
+noise='none'
+gender='none'
+accessories='none'
+age='none'
+facialHair='none'
+makeup='none'
+blur='none'
+smile='none'
+exposure='none'
+glasses='none'
+
+for face in faces:
+
+    noise = face['faceAttributes']['noise']['value']
+    gender = face['faceAttributes']['gender']
+    age = face['faceAttributes']['age']
+    accessories = face['faceAttributes']['accessories']
+    
+    if int(face['faceAttributes']['emotion']['sadness'])> 0:
+        emotion = 'sadness'
+    if int(face['faceAttributes']['emotion']['neutral']) > 0:
+        emotion = 'neutral'
+    if int(face['faceAttributes']['emotion']['contempt']) > 0:
+        emotion = 'contempt'
+    if int(face['faceAttributes']['emotion']['disgust']) > 0:
+        emotion = 'disgust'
+    if int(face['faceAttributes']['emotion']['anger']) > 0:
+        emotion = 'anger'
+    if int(face['faceAttributes']['emotion']['surprise'] )> 0:
+        emotion = 'surprise'
+    if int(face['faceAttributes']['emotion']['fear']) > 0:
+        emotion = 'fear'
+    if int(face['faceAttributes']['emotion']['happiness']) > 0:
+        emotion = 'happiness'
+        
+  
+    if face['faceAttributes']['makeup']['lipMakeup']==True:
+        makeup = 'lipMakeup'
+    if face['faceAttributes']['makeup']['eyeMakeup']==True:
+        makeup = 'eyeMakeup'
+
+    if int(face['faceAttributes']['facialHair']['sideburns'])>0:
+        facialHair = 'sideburns'
+    if int(face['faceAttributes']['facialHair']['moustache'])>0:
+        facialHair = 'moustache'
+    if int(face['faceAttributes']['facialHair']['beard'])>0:
+        facialHair = 'beard'
+        
+    blur = face['faceAttributes']['blur']['value']
+    smile = face['faceAttributes']['smile']
+    exposure = face['faceAttributes']['exposure']['value']
+    glasses = face['faceAttributes']['glasses']
+
+print 'emotion:',emotion
+print 'noise:',noise
+print 'gender:',gender
+print 'accessories:',accessories
+print 'age:',age
+print 'facialHair:',facialHair
+print 'makeup:',makeup
+print 'blur:',blur
+print 'smile:',smile
+print 'exposure:',exposure
+print 'glasses:',glasses
