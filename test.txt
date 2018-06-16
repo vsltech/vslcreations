@@ -1,3 +1,0 @@
-subscription_key = "06359f9ee5f342e4a05f0b7767e61341"
-	assert subscription_key
-	face_api_url = 'https://westcentralus.api.cognitive.microsoft.com/face/v1.0/detect'
